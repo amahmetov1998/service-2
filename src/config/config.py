@@ -1,10 +1,15 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import BaseModel, PostgresDsn
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class RunConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8080
+    reload: bool = True
+    factory: bool = True
 
 
 class DatabaseConfig(BaseModel):
@@ -22,7 +27,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
         env_nested_delimiter="__",
         env_prefix="APP_CONFIG__",
-        env_file=".env",
+        env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )

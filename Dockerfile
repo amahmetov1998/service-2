@@ -18,4 +18,4 @@ RUN chmod +x entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]
 
-CMD ["uvicorn", "src.application:get_app", "--host", "0.0.0.0", "--port", "8080", "--factory"]
+CMD ["uvicorn", "src.main:get_app", "--host", "0.0.0.0", "--port", "8080", "--factory"]

@@ -1,30 +1,27 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
-from src.api import router as api_router
-
-from contextlib import asynccontextmanager
-
-from src.utils.db_helper import db_helper
+from src.config import AppDependencies
 
 
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    # startup
-    yield
-    # shutdown
-    await db_helper.dispose()
+def create_app(
+    deps: AppDependencies,
+) -> FastAPI:
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        _app.state.deps = deps
 
+        yield
 
-def get_app() -> FastAPI:
+        await deps.engine.dispose()
+
     app = FastAPI(
         lifespan=lifespan,
-        docs_url="/docs",
-        openapi_url="/openapi.json",
         default_response_class=JSONResponse,
     )
-
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -32,7 +29,5 @@ def get_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    app.include_router(api_router)
 
     return app

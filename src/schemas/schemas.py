@@ -3,7 +3,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from src.enums import OperatorType, RegionType
-from src.schemas.base import BaseResponse
+from .base import BaseResponse
 
 
 class CreatePhoneDetailRequest(BaseModel):

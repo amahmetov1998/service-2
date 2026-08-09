@@ -2,10 +2,10 @@
 
 set -e
 
-echo "Running migrations..."
+echo "Running migrations"
 
-alembic -c src/alembic.ini upgrade head
+alembic upgrade head
 
-echo "Starting application..."
+echo "Starting application"
 
 exec "$@"
