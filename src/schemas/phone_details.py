@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from src.enums import OperatorType, RegionType
+from src.models import OperatorType, RegionType
 from .base import BaseResponse
 
 

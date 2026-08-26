@@ -4,19 +4,24 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
-from src.config import AppDependencies
+from src.config import (
+    create_engine,
+    create_session_factory,
+    settings,
+)
 
 
-def create_app(
-    deps: AppDependencies,
-) -> FastAPI:
+def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
-        _app.state.deps = deps
+        _app.state.engine = create_engine(settings.db.url)
+        _app.state.session_factory = create_session_factory(
+            engine=app.state.engine,
+        )
 
         yield
 
-        await deps.engine.dispose()
+        await _app.state.engine.dispose()
 
     app = FastAPI(
         lifespan=lifespan,

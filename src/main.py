@@ -5,14 +5,11 @@ from fastapi import FastAPI
 
 from src.application import create_app
 from src.api import healthcheck_router, phones_router
-from src.config import AppDependencies
 from src.config import settings
-from src.providers import create_app_dependencies
 
 
 def get_app() -> FastAPI:
-    dependencies: AppDependencies = create_app_dependencies()
-    app: FastAPI = create_app(dependencies)
+    app: FastAPI = create_app()
     app.include_router(healthcheck_router)
     app.include_router(phones_router)
     return app

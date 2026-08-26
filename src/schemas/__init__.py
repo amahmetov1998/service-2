@@ -1,4 +1,4 @@
-from .schemas import CreatePhoneDetailRequest, PhoneDetailResponse
+from .phone_details import CreatePhoneDetailRequest, PhoneDetailResponse
 from .healthcheck import HealthCheck
 from .base import BaseResponse
 
