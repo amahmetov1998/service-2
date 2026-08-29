@@ -1,7 +1,7 @@
 from .phone_details import PhoneDetail
 from .base import Base
 from .operations import Operation
-from .enums import OperatorType, RegionType
+from .enums import OperatorType, RegionType, ErrorCode
 
 
 __all__ = [
@@ -10,4 +10,5 @@ __all__ = [
     "Operation",
     "OperatorType",
     "RegionType",
+    "ErrorCode",
 ]

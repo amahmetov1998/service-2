@@ -8,4 +8,4 @@ from .base import Base
 
 class Operation(Base):
     operation_id: Mapped[UUID] = mapped_column(unique=True)
-    response: Mapped[dict] = mapped_column(JSONB)
+    response: Mapped[list[dict]] = mapped_column(JSONB)

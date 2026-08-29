@@ -12,11 +12,12 @@ class OperationRepository:
     ) -> None:
         self.session = session
 
-    async def lock_operation_id(self, operation_id: str) -> None:
+    async def lock_operation_id(self, operation_id: UUID) -> None:
+        key = str(operation_id)
         await self.session.execute(
             select(
                 func.pg_advisory_xact_lock(
-                    func.hashtextextended(operation_id, 0),
+                    func.hashtextextended(key, 0),
                 ),
             )
         )
@@ -27,9 +28,9 @@ class OperationRepository:
         operation: Operation | None = result.scalar_one_or_none()
         return operation
 
-    async def create_operation(self, **values) -> None:
+    async def create_operation(self, operation_id: UUID, response: list[dict]) -> None:
         stmt = (
             insert(Operation)
-            .values(**values)
+            .values(operation_id=operation_id, response=response)
         )
         await self.session.execute(stmt)
