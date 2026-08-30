@@ -1,0 +1,17 @@
+from uuid import UUID
+
+from pydantic import BaseModel
+
+from src.models import OperatorType, RegionType
+from .base import BaseResponse
+
+
+class CreatePhoneDetailRequest(BaseModel):
+    phone_number: str
+    operator_type: OperatorType
+    region_type: RegionType
+    is_spam: bool = False
+
+
+class PhoneDetailResponse(CreatePhoneDetailRequest, BaseResponse):
+    uuid: UUID
