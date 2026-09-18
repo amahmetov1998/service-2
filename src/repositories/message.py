@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select, func, Result, insert
@@ -28,7 +29,7 @@ class MessageRepository:
         operation: Message | None = result.scalar_one_or_none()
         return operation
 
-    async def create_message(self, message_id: UUID, message: list[dict]) -> None:
+    async def create_message(self, message_id: UUID, message: dict[str, Any]) -> None:
         stmt = (
             insert(Message)
             .values(message_id=message_id, message=message)

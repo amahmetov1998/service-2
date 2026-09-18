@@ -1,8 +1,8 @@
 """create notification message table
 
-Revision ID: a7f65674e78f
+Revision ID: 8057b0f30343
 Revises: 018ee234cbf6
-Create Date: 2026-09-14 17:03:38.438865
+Create Date: 2026-09-19 01:36:45.000218
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'a7f65674e78f'
+revision: str = '8057b0f30343'
 down_revision: Union[str, Sequence[str], None] = '018ee234cbf6'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -31,6 +31,7 @@ def upgrade() -> None:
     )
     op.create_table('notifications',
     sa.Column('user_uuid', sa.Uuid(), nullable=False),
+    sa.Column('notification_uuid', sa.Uuid(), nullable=False),
     sa.Column('type', sa.Enum('WELCOME', 'EMAIL_VERIFIED', 'PASSWORD_CHANGED', name='notificationtype'), nullable=False),
     sa.Column('title', sa.String(length=20), nullable=False),
     sa.Column('message', sa.String(length=200), nullable=False),

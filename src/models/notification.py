@@ -11,6 +11,7 @@ class Notification(Base):
     """Модель уведомления"""
 
     user_uuid: Mapped[UUID]
+    notification_uuid: Mapped[UUID]
     type: Mapped[NotificationType]
     title: Mapped[str] = mapped_column(String(20))
     message: Mapped[str] = mapped_column(String(200))
