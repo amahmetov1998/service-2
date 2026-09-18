@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Sequence, Callable
 from uuid import UUID
 
@@ -12,16 +13,26 @@ from src.schemas import (
     IdempotencyConflictDetails
 )
 
-from src.config import ApplicationUnitOfWork
+from src.config import UnitOfWork, RepositoryFactory, PhoneDetailContext
 from src.utils import normalize_payload
 
 
 class PhoneService:
     def __init__(
         self,
-        uow_factory: Callable[[], ApplicationUnitOfWork],
+        uow_factory: Callable[[], UnitOfWork],
+        repo_factory: RepositoryFactory
     ) -> None:
-        self.uow_factory = uow_factory
+        self._uow_factory = uow_factory
+        self._repo_factory = repo_factory
+
+    @asynccontextmanager
+    async def _tx(self):
+        async with self._uow_factory() as uow:
+            yield PhoneDetailContext(
+                uow=uow,
+                repo_factory=self._repo_factory,
+            )
 
     async def create_phone_detail(
         self,
@@ -29,9 +40,9 @@ class PhoneService:
         operation_id: UUID
     ) -> list[PhoneDetailResponse]:
 
-        async with self.uow_factory() as uow:
-            await uow.operations.lock_operation_id(operation_id=operation_id)
-            operation = await uow.operations.get_operation(operation_id=operation_id)
+        async with self._tx() as ctx:
+            await ctx.operations.lock_operation_id(operation_id=operation_id)
+            operation = await ctx.operations.get_operation(operation_id=operation_id)
 
             if operation:
                 payload_to_dict = phone_detail_mapper.schema_to_dict(payload=payload)
@@ -46,7 +57,7 @@ class PhoneService:
                         )
                     )
                 return phone_detail_mapper.dict_to_schema(response=operation.response)
-            details = await uow.phones.create_phone_detail(payload)
+            details = await ctx.phones.create_phone_detail(payload)
 
             if len(payload) != len(details):
                 inserted_numbers = {detail.phone_number for detail in details}
@@ -59,7 +70,7 @@ class PhoneService:
                     details=AlreadyExistsDetails(detail=conflicting_numbers)
                 )
             response = phone_detail_mapper.orm_to_dict(phone_details=details)
-            await uow.operations.create_operation(operation_id=operation_id, response=response)
+            await ctx.operations.create_operation(operation_id=operation_id, response=response)
             return phone_detail_mapper.orm_to_schema(
                 phone_details=details
             )
@@ -68,8 +79,8 @@ class PhoneService:
         self,
         phone_numbers: list[str]
     ) -> Sequence[PhoneDetail]:
-        async with self.uow_factory() as uow:
-            extracted = await uow.phones.get_phone_detail(phone_numbers)
+        async with self._tx() as tx:
+            extracted = await tx.phones.get_phone_detail(phone_numbers)
             if len(phone_numbers) != len(extracted):
                 inserted = [item.phone_number for item in extracted]
                 phones_not_found = list(set(phone_numbers) - set(inserted))
