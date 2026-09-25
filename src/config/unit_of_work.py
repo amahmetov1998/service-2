@@ -1,6 +1,11 @@
-from typing import Self
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.repositories import PhoneRepository, OperationRepository
+from src.repositories import (
+    PhoneRepository,
+    OperationRepository,
+    MessageRepository,
+    NotificationRepository
+)
 
 
 class UnitOfWork:
@@ -9,21 +14,29 @@ class UnitOfWork:
 
     async def __aenter__(self):
         self.session = self.session_factory()
+        self._transaction = await self.session.begin()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         try:
-            if exc_type is None:
-                await self.session.commit()
-            else:
-                await self.session.rollback()
+            await self._transaction.__aexit__(
+                exc_type,
+                exc_val,
+                exc_tb,
+            )
         finally:
             await self.session.close()
 
 
-class ApplicationUnitOfWork(UnitOfWork):
-    async def __aenter__(self) -> Self:
-        await super().__aenter__()
-        self.operations = OperationRepository(self.session)
-        self.phones = PhoneRepository(self.session)
-        return self
+class RepositoryFactory:
+    def message(self, session: AsyncSession) -> MessageRepository:
+        return MessageRepository(session)
+
+    def notification(self, session: AsyncSession) -> NotificationRepository:
+        return NotificationRepository(session)
+
+    def phone_detail(self, session: AsyncSession) -> PhoneRepository:
+        return PhoneRepository(session)
+
+    def operation(self, session: AsyncSession) -> OperationRepository:
+        return OperationRepository(session)
