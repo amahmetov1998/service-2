@@ -29,6 +29,7 @@ async def run_worker():
         bootstrap_servers=settings.broker.url,
         acks=settings.broker.acks,
         enable_idempotence=settings.broker.enable_idempotence,
+        transactional_id=settings.broker.transactional_id,
         value_serializer=lambda x: json.dumps(x).encode(),
         max_batch_size=settings.broker.max_batch_size,
         linger_ms=settings.broker.linger_ms,
@@ -45,6 +46,7 @@ async def run_worker():
     service_broker = ServiceBroker(
         producer=producer,
         consumer=consumer,
+        group_id=settings.broker.group_id,
     )
     worker = Worker(
         broker=service_broker,

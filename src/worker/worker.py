@@ -9,7 +9,8 @@ from pydantic import ValidationError
 from src.exceptions import BrokerUnavailableError
 from src.broker import ServiceBroker
 from src.models import OperationState
-from src.schemas import NotificationCreateSchema, Message
+from src.schemas import NotificationCreateSchema, MessageSchema
+from src.mappers import notification as notification_mapper, message as message_mapper
 from src.config import UnitOfWork, WorkerContext, RepositoryFactory
 
 log = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ class Worker:
             await tx.messages.lock_message_id(message_id=message_id)
             message_db = await tx.messages.get_message(message_id=message_id)
             if message_db:
-                message_dict = Message.model_validate(message_db).model_dump()
+                message_dict = MessageSchema.model_validate(message_db.message).model_dump(mode="json")
                 if notification_msg != message_dict:
                     log.warning(
                         "Idempotency conflict: message_id=%s already exists with different payload."
@@ -100,10 +101,10 @@ class Worker:
                 elif notification_msg == message_dict:
                     state = OperationState.DUPLICATE
             else:
-                await tx.notifications.create_notification(values=notification_msg)
-                await tx.messages.create_message(
-                    message_id=message_id, message=notification_msg
-                )
+                notification = notification_mapper.message_to_orm(message=message)
+                await tx.notifications.create_notification(notification=notification)
+                message_orm = message_mapper.message_to_orm(message_id=message_id, message=message)
+                await tx.messages.create_message(message=message_orm)
 
         if state == OperationState.CONFLICT:
             await self._send_to_dlq(message=message)
@@ -115,12 +116,7 @@ class Worker:
 
     async def _send_to_dlq(self, message: ConsumerRecord):
         try:
-            await self.broker.send_and_wait_ack(
-                    headers=list(message.headers),
-                    topic_name=self.dead_letter_topic_name,
-                    value=message.value,
-                )
-            await self.broker.commit(message)
+            await self.broker.send_to_dlq(message=message, topic_name=self.dead_letter_topic_name)
         except BrokerUnavailableError as e:
             log.warning(
                 "Broker unavailable while sending message to dlq."

@@ -51,10 +51,11 @@ class BrokerConfig(BaseModel):
     poll_interval: int
     group_id: str
     auto_offset_reset: str  # с какого места консумер начнёт читать сообщения если нет сохранённого offset
-    enable_auto_commit: bool
+    enable_auto_commit: bool = False
     max_poll_records: int  # количество сообщений, которое консумер получает за один poll
     acks: str
     enable_idempotence: bool
+    transactional_id: str
     linger_ms: int
     max_batch_size: int
 

@@ -1,7 +1,6 @@
-from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, func, Result, insert
+from sqlalchemy import select, func, Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models import Message
 
@@ -26,12 +25,9 @@ class MessageRepository:
     async def get_message(self, message_id: UUID) -> Message | None:
         stmt = select(Message).where(Message.message_id == message_id)
         result: Result = await self.session.execute(stmt)
-        operation: Message | None = result.scalar_one_or_none()
-        return operation
+        message: Message | None = result.scalar_one_or_none()
+        return message
 
-    async def create_message(self, message_id: UUID, message: dict[str, Any]) -> None:
-        stmt = (
-            insert(Message)
-            .values(message_id=message_id, message=message)
-        )
-        await self.session.execute(stmt)
+    async def create_message(self, message: Message) -> Message:
+        self.session.add(message)
+        return message
