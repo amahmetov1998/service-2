@@ -1,19 +1,20 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.services import PhoneService
-from .session_factory import get_session_factory
-from .uow import get_uow
+from .session import get_session
+from .uow import get_repository_factory
 
 
 def get_phone_service(
-    session_factory: Annotated[
-        async_sessionmaker[AsyncSession], Depends(get_session_factory)
-    ],
+    session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PhoneService:
-    uow_factory = get_uow(session_factory=session_factory)
+    repo_factory = get_repository_factory()
+    phones = repo_factory.phone_detail(session)
+    operations = repo_factory.operation(session)
     return PhoneService(
-        uow_factory=uow_factory,
+        phones=phones,
+        operations=operations
     )
